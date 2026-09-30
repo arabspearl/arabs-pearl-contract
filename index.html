@@ -535,12 +535,15 @@ async function printContract(){
    sync();
    setTimeout(()=>window.print(),180);
    setTimeout(()=>{
+     resetForm();
      $('agreement').value=String(data.nextReference);
      $('agreement').readOnly=true;
      $('agreement').style.background='#f3f6f8';
      manualReference=false;
      sync();
      btn.disabled=false;btn.textContent='Print';
+     status.textContent='Ready for new contract — APTC/SA/'+data.nextReference;
+     status.style.color='#16803a';
    },700);
  }catch(err){
    console.error(err);
