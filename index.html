@@ -653,12 +653,39 @@ function enableReferenceEdit(){
 }
 function cleanClientForFile(name){return String(name||'Client').trim().replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'-');}
 async function createContractPdfBase64(){
- sync();await new Promise(r=>setTimeout(r,180));
- const paper=document.querySelector('.paper'),ref=$('agreement').value.trim()||'contract',client=cleanClientForFile($('client').value);
+ sync();
+ await new Promise(r=>setTimeout(r,220));
+
+ const paper=document.querySelector('.paper');
+ const ref=$('agreement').value.trim()||'contract';
+ const client=cleanClientForFile($('client').value);
  const filename='APTC-SA-'+ref+'-'+client+'.pdf';
- const opt={margin:0,filename:filename,image:{type:'jpeg',quality:.98},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['avoid-all','css','legacy']}};
- const worker=html2pdf().set(opt).from(paper).toPdf(),pdf=await worker.get('pdf'),dataUri=pdf.output('datauristring');
- return {base64:dataUri.split(',')[1],filename:filename};
+
+ /* Capture the contract as ONE complete A4 image.
+    We intentionally do not let html2pdf paginate the .paper element,
+    because its mm→px rounding can shift the page and crop the bottom. */
+ const canvas=await html2canvas(paper,{
+   scale:3,
+   useCORS:true,
+   backgroundColor:'#ffffff',
+   logging:false,
+   scrollX:0,
+   scrollY:0,
+   windowWidth:paper.scrollWidth,
+   windowHeight:paper.scrollHeight
+ });
+
+ const imgData=canvas.toDataURL('image/jpeg',0.98);
+ const jsPDFCtor=(window.jspdf&&window.jspdf.jsPDF)?window.jspdf.jsPDF:window.jsPDF;
+ const pdf=new jsPDFCtor({orientation:'portrait',unit:'mm',format:'a4',compress:true});
+
+ /* Exact A4 placement: no pagination, no vertical offset, no bottom crop. */
+ pdf.addImage(imgData,'JPEG',0,0,210,297,undefined,'FAST');
+
+ return {
+   base64:pdf.output('datauristring').split(',')[1],
+   filename:filename
+ };
 }
 async function uploadContractToDrive(){
  const btn=$('uploadBtn'),status=$('uploadStatus'),client=$('client').value.trim(),reference=$('agreement').value.trim().replace(/^APTC\/SA\//i,'');
