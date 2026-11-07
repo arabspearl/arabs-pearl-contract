@@ -547,7 +547,7 @@ async function printContract(){
  status.textContent='Creating PDF and saving to Arabs Pearl Drive...';status.style.color='#07549a';
  try{
    const pdf=await createContractPdfBase64();
-   const payload={action:'printAndUpload',pdfBase64:pdf.base64,clientName:client,reference:Number(reference),markid:$('markid').value,filename:pdf.filename};
+   const payload={action:'printAndUpload',pdfBase64:pdf.base64,clientName:client,reference:Number(reference),markid:$('markid').value,filename:pdf.filename,fileName:pdf.filename};
    const r=await fetch(ARABS_PEARL_API,{
      method:'POST',
      headers:{'Content-Type':'text/plain;charset=utf-8'},
@@ -559,6 +559,8 @@ async function printContract(){
    status.style.color='#16803a';
    alert('Contract uploaded successfully to Drive.\n\n'+data.contractReference+'\n'+data.fileName);
    sync();
+   // Set the browser's suggested Print-to-PDF filename to the same name sent to Drive.
+   document.title=pdf.filename.replace(/\.pdf$/i,'');
    setTimeout(()=>window.print(),180);
    setTimeout(()=>{
      resetForm();
@@ -721,7 +723,7 @@ async function uploadContractToDrive(){
  btn.disabled=true;btn.textContent='Creating PDF...';status.textContent='Preparing contract PDF...';status.style.color='#07549a';
  try{
   const pdf=await createContractPdfBase64();btn.textContent='Uploading...';status.textContent='Uploading to Arabs Pearl Drive...';
-  const payload={action:'uploadPDF',pdfBase64:pdf.base64,clientName:client,reference:Number(reference),manualReference:manualReference,markid:$('markid').value,filename:pdf.filename};
+  const payload={action:'uploadPDF',pdfBase64:pdf.base64,clientName:client,reference:Number(reference),manualReference:manualReference,markid:$('markid').value,filename:pdf.filename,fileName:pdf.filename};
   const r=await fetch(ARABS_PEARL_API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
   const data=await r.json();if(!data.success)throw new Error(data.error||'Upload failed');
   status.textContent='Saved: '+data.fileName;status.style.color='#16803a';
